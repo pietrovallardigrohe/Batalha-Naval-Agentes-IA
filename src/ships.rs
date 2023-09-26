@@ -1,13 +1,23 @@
 use crate::{player::Player, utils};
 use core::fmt;
+use rand::{thread_rng, Rng};
 use std::{error::Error, fmt::Display};
 use utils::random_point;
 
 // type Result<T> = std::result::Result<T, SpaceOccupied>;
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub struct Position {
     pub x: usize,
     pub y: usize,
+}
+
+impl Position {
+    pub fn get_random_position() -> Position {
+        return Position {
+            x: thread_rng().gen_range(0..10),
+            y: thread_rng().gen_range(0..10),
+        };
+    }
 }
 
 pub fn generate_ships(player: &mut Player) {

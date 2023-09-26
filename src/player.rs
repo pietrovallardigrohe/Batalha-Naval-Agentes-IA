@@ -4,7 +4,8 @@ use crate::ships::Position;
 pub struct Player {
     pub played_positions: Vec<Position>,
     pub board: [[char; 10]; 10],
-    // pub ships:
+    pub number_ships: usize,
+    pub ships_destroyed: usize,
 }
 
 impl Player {
@@ -29,6 +30,8 @@ impl Player {
         return Player {
             played_positions: vec![],
             board: [[' '; 10]; 10],
+            number_ships: 5,
+            ships_destroyed: 0,
         };
     }
 }

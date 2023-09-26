@@ -162,7 +162,7 @@ dependencies = [
 [[package]]
 name = "rusty_tools"
 version = "0.1.0"
-source = "git+https://github.com/pietrovallardigrohe/Rusty-Tools#530f2801c82adaeb7cfa37522a4552f788a5216c"
+source = "git+https://github.com/pietrovallardigrohe/Rusty-Tools#baa6580b961c035d45503b29f74cf77af33b5ac5"
 
 [[package]]
 name = "wasi"
