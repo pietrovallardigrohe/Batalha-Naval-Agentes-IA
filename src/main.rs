@@ -12,30 +12,32 @@ use player::Player;
 enum ExecutionState {
     RUNNING,
     FINISHED,
+    DEBUG,
 }
 
-static mut DEBUG_STRING: String = String::new();
+// static mut DEBUG_STRING: String = String::new();
 
 fn main() {
     // let mut board_p1 = [[' 'u8; 10]; 10];
     // let mut board_p2 = [[' '; 10]; 10];
-    let mut player_human = Player::new();
-    let mut player_ai = AiPlayer::new(player_human.board);
+    let gen = ships::generate_ships();
+    let mut player_human = Player::new(gen.0, gen.1);
+    let gen = ships::generate_ships();
+    let mut player_ai = AiPlayer::new(Player::new(gen.0, gen.1), player_human.board);
     let mut game_state = ExecutionState::RUNNING;
 
     let mut turns: usize = 0;
-    ships::generate_ships(&mut player_human);
-    ships::generate_ships(&mut player_ai.player);
+    ships::generate_ships();
 
-    while game_state == ExecutionState::RUNNING {
-        clear_terminal();
+    let mut print_buffer = String::new();
+
+    while game_state == ExecutionState::RUNNING || game_state == ExecutionState::DEBUG {
+        // clear_terminal();
         print_screen(&player_human, &player_ai.player);
-        unsafe {
-            println!("{DEBUG_STRING}");
-            DEBUG_STRING = String::new();
-        }
+        println!("{print_buffer}");
 
         if turns % 2 == 0 {
+            print_buffer = String::new();
             println!("\nDigite uma escolha(padrão: \"X Y\") ou \"quit\" para sair");
             let mut input = String::new();
             stdin().read_line(&mut input).unwrap();
@@ -46,40 +48,58 @@ fn main() {
             match process_input(input) {
                 Ok(position) => {
                     if player_human.shoot(position, &mut player_ai.player) {
+                        check_ships(&mut player_human, &mut player_ai.player);
                         turns += 1;
                         player_ai.human_board = player_human.board;
                     }
                 }
                 Err(err) => {
-                    unsafe { DEBUG_STRING = String::from(err) };
+                    print_buffer = String::from(err);
                     ()
                 }
             }
         } else {
             let position = player_ai.decide();
-            unsafe {
-                DEBUG_STRING.push_str(
-                    format!(
-                        "{position:?}\nAttempt: {}\nAttack Mode: {}",
-                        player_ai.attempt, player_ai.attack_mode
-                    )
-                    .as_str(),
-                )
-            }
+            // print_buffer.push_str(
+            //     format!(
+            //         "{position:?} \nAttempt: {} \nAttack Mode: {} \nLast position: {:?}",
+            //         player_ai.attempt,
+            //         player_ai.attack_mode,
+            //         player_ai
+            //             .player
+            //             .played_positions
+            //             .last()
+            //             .unwrap_or(&Position { x: 0, y: 0 })
+            //     )
+            //     .as_str(),
+            // );
 
             if player_ai.player.shoot(position, &mut player_human) {
+                check_ships(&mut player_ai.player, &mut player_human);
                 turns += 1;
             }
         }
         // println!("{:?}", input);]
+
+        if player_human.number_ships == 0 {
+            print_screen(&player_human, &player_ai.player);
+            println!("AI ganhou");
+            game_state = ExecutionState::FINISHED;
+        } else if player_ai.player.number_ships == 0 {
+            print_screen(&player_human, &player_ai.player);
+            println!("Humano ganhou");
+            game_state = ExecutionState::FINISHED;
+        }
     }
     // Game ending state
 }
 
 use colored::Colorize;
 
+use crate::ships::check_ships;
+
 pub fn print_screen(player_1: &Player, player_2: &Player) {
-    println!("  Jogador 1:              Jogador 2:");
+    println!("  Jogador 1:              Jogador AI:");
     print!("  ");
     for i in 0..10 {
         print!("{}{}", i.to_string().underline(), " ".underline());
@@ -102,6 +122,15 @@ pub fn print_screen(player_1: &Player, player_2: &Player) {
         }
         print!("|\n");
     }
+
+    println!(
+        "Número de navios: {}     Número de navios: {}",
+        player_1.number_ships, player_2.number_ships
+    );
+    println!(
+        "Navios destruídos: {}    Navios destruídos: {}",
+        player_1.ships_destroyed, player_2.ships_destroyed
+    );
 }
 
 fn process_input<'a>(input: String) -> Result<Position, &'a str> {
@@ -127,7 +156,7 @@ fn process_input<'a>(input: String) -> Result<Position, &'a str> {
             return Err("Invalid input");
         };
 
-        unsafe { DEBUG_STRING.push_str(format!("\nDEBUG: {x} {y}").as_str()) };
+        // print_buffer.push_str(format!("\nDEBUG: {x} {y}").as_str());
         Ok(Position { x, y })
     } else {
         return Err("Invalid input");

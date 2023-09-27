@@ -18,35 +18,93 @@ impl Position {
             y: thread_rng().gen_range(0..10),
         };
     }
-}
 
-pub fn generate_ships(player: &mut Player) {
-    let board = &mut player.board;
-    let mut iteration = 0;
-    while generate_l(board).is_err() && iteration < 100 {
-        iteration += 1;
-    }
-
-    let mut iteration = 0;
-    while generate_z(board).is_err() && iteration < 100 {
-        iteration += 1;
-    }
-
-    let mut iteration = 0;
-    while generate_t(board).is_err() && iteration < 100 {
-        iteration += 1;
-    }
-
-    for _ in 0..2 {
-        let mut iteration = 0;
-        while generate_duo(board).is_err() && iteration < 100 {
-            iteration += 1;
+    pub fn new(pos: [usize; 2]) -> Position {
+        Position {
+            x: pos[0],
+            y: pos[1],
         }
     }
 }
 
+#[derive(Clone, PartialEq, Eq)]
+pub enum ShipType {
+    T,
+    L,
+    Z,
+    D, // Duo
+}
+
+#[derive(Clone, PartialEq, Eq)]
+pub struct Ship {
+    starting_position: Position,
+    is_destroyed: bool,
+    ship_type: ShipType,
+}
+
+impl Ship {
+    fn new(starting_position: Position, ship_type: ShipType) -> Ship {
+        return Ship {
+            starting_position,
+            is_destroyed: false,
+            ship_type,
+        };
+    }
+}
+
+pub fn generate_ships() -> (Vec<Ship>, [[char; 10]; 10]) {
+    let mut board = [[' '; 10]; 10];
+    let mut ships: Vec<Ship> = vec![];
+
+    let mut iteration = 0;
+    while iteration < 100 {
+        let l = generate_l(&mut board);
+        if l.is_ok() {
+            ships.push(l.unwrap());
+            break;
+        } else {
+            iteration += 1;
+        }
+    }
+
+    iteration = 0;
+    while iteration < 100 {
+        let z: Result<Ship, ()> = generate_z(&mut board);
+        if z.is_ok() {
+            ships.push(z.unwrap());
+            break;
+        } else {
+            iteration += 1;
+        }
+    }
+
+    iteration = 0;
+    while iteration < 100 {
+        let t = generate_t(&mut board);
+        if t.is_ok() {
+            ships.push(t.unwrap());
+            break;
+        } else {
+            iteration += 1;
+        }
+    }
+    for _ in 0..2 {
+        let mut iteration = 0;
+        while iteration < 100 {
+            let duo = generate_duo(&mut board);
+            if duo.is_ok() {
+                ships.push(duo.unwrap());
+                break;
+            } else {
+                iteration += 1;
+            }
+        }
+    }
+    (ships, board)
+}
+
 // Generate L shape ship
-fn generate_l(board: &mut [[char; 10]; 10]) -> Result<[usize; 2], ()> {
+fn generate_l(board: &mut [[char; 10]; 10]) -> Result<Ship, ()> {
     let [x, y] = random_point(7, 8);
     // println!("X: {x}, Y: {y}");
 
@@ -55,7 +113,7 @@ fn generate_l(board: &mut [[char; 10]; 10]) -> Result<[usize; 2], ()> {
         || board[x + 2][y] == '1'
         || board[x + 2][y + 1] == '1'
     {
-        println!("ERROR: Initial position: X = {x}, Y = {y}");
+        println!("ERROR generate_l: Initial position: X = {x}, Y = {y}");
         return Err(());
     }
 
@@ -71,10 +129,10 @@ fn generate_l(board: &mut [[char; 10]; 10]) -> Result<[usize; 2], ()> {
     // *current = 1;
     // board[x + 1][y + 2] = 1;
 
-    Ok([x, y])
+    Ok(Ship::new(Position::new([x, y]), ShipType::L))
 }
 
-fn generate_z(board: &mut [[char; 10]; 10]) -> Result<[usize; 2], ()> {
+fn generate_z(board: &mut [[char; 10]; 10]) -> Result<Ship, ()> {
     let [x, y] = random_point(7, 8);
     // println!("X: {x}, Y: {y}");
 
@@ -83,7 +141,7 @@ fn generate_z(board: &mut [[char; 10]; 10]) -> Result<[usize; 2], ()> {
         || board[x + 1][y + 1] == '1'
         || board[x + 2][y + 1] == '1'
     {
-        println!("ERROR: Initial position: X = {x}, Y = {y}");
+        println!("ERROR generate_z: Initial position: X = {x}, Y = {y}");
         return Err(());
     }
 
@@ -92,10 +150,10 @@ fn generate_z(board: &mut [[char; 10]; 10]) -> Result<[usize; 2], ()> {
     board[x + 1][y + 1] = '1';
     board[x + 2][y + 1] = '1';
     // println!("DEBUG: {:?}", board);
-    Ok([x, y])
+    Ok(Ship::new(Position::new([x, y]), ShipType::Z))
 }
 
-fn generate_t(board: &mut [[char; 10]; 10]) -> Result<[usize; 2], ()> {
+fn generate_t(board: &mut [[char; 10]; 10]) -> Result<Ship, ()> {
     let [x, y] = random_point(7, 7);
     // println!("X: {x}, Y: {y}");
 
@@ -105,7 +163,7 @@ fn generate_t(board: &mut [[char; 10]; 10]) -> Result<[usize; 2], ()> {
         || board[x + 1][y + 1] == '1'
         || board[x + 2][y + 1] == '1'
     {
-        println!("ERROR: Initial position: X = {x}, Y = {y}");
+        println!("ERROR generate_t: Initial position: X = {x}, Y = {y}");
         return Err(());
     }
 
@@ -115,22 +173,104 @@ fn generate_t(board: &mut [[char; 10]; 10]) -> Result<[usize; 2], ()> {
     board[x + 1][y + 1] = '1';
     board[x + 2][y + 1] = '1';
     // println!("DEBUG: {:?}", board);
-    Ok([x, y])
+    Ok(Ship::new(Position::new([x, y]), ShipType::T))
 }
 
-fn generate_duo(board: &mut [[char; 10]; 10]) -> Result<[usize; 2], ()> {
+fn generate_duo(board: &mut [[char; 10]; 10]) -> Result<Ship, ()> {
     let [x, y] = random_point(9, 8);
     // println!("X: {x}, Y: {y}");
 
     if board[x][y] == '1' || board[x][y + 1] == '1' {
-        println!("ERROR: Initial position: X = {x}, Y = {y}");
+        println!("ERROR generate_duo: Initial position: X = {x}, Y = {y}");
         return Err(());
     }
 
     board[x][y] = '1';
     board[x][y + 1] = '1';
     // println!("DEBUG: {:?}", board);
-    Ok([x, y])
+    Ok(Ship::new(Position::new([x, y]), ShipType::D))
+}
+
+pub fn check_ships(player_1: &mut Player, player_2: &mut Player) {
+    for ship in &mut player_2.ships {
+        if !ship.is_destroyed {
+            match ship.ship_type {
+                ShipType::D => {
+                    if player_1.played_positions.contains(&ship.starting_position)
+                        && player_1.played_positions.contains(&Position {
+                            x: ship.starting_position.x,
+                            y: ship.starting_position.y + 1,
+                        })
+                    {
+                        ship.is_destroyed = true;
+                        player_1.ships_destroyed += 1;
+                    }
+                }
+                ShipType::L => {
+                    if player_1.played_positions.contains(&ship.starting_position)
+                        && player_1.played_positions.contains(&Position {
+                            x: ship.starting_position.x + 1,
+                            y: ship.starting_position.y,
+                        })
+                        && player_1.played_positions.contains(&Position {
+                            x: ship.starting_position.x + 2,
+                            y: ship.starting_position.y,
+                        })
+                        && player_1.played_positions.contains(&Position {
+                            x: ship.starting_position.x + 2,
+                            y: ship.starting_position.y + 1,
+                        })
+                    {
+                        ship.is_destroyed = true;
+                        player_1.ships_destroyed += 1;
+                    }
+                }
+                ShipType::Z => {
+                    if player_1.played_positions.contains(&ship.starting_position)
+                        && player_1.played_positions.contains(&Position {
+                            x: ship.starting_position.x + 1,
+                            y: ship.starting_position.y,
+                        })
+                        && player_1.played_positions.contains(&Position {
+                            x: ship.starting_position.x + 1,
+                            y: ship.starting_position.y + 1,
+                        })
+                        && player_1.played_positions.contains(&Position {
+                            x: ship.starting_position.x + 2,
+                            y: ship.starting_position.y + 1,
+                        })
+                    {
+                        ship.is_destroyed = true;
+                        player_1.ships_destroyed += 1;
+                    }
+                }
+                ShipType::T => {
+                    if player_1.played_positions.contains(&ship.starting_position)
+                        && player_1.played_positions.contains(&Position {
+                            x: ship.starting_position.x,
+                            y: ship.starting_position.y + 1,
+                        })
+                        && player_1.played_positions.contains(&Position {
+                            x: ship.starting_position.x,
+                            y: ship.starting_position.y + 2,
+                        })
+                        && player_1.played_positions.contains(&Position {
+                            x: ship.starting_position.x + 1,
+                            y: ship.starting_position.y + 1,
+                        })
+                        && player_1.played_positions.contains(&Position {
+                            x: ship.starting_position.x + 2,
+                            y: ship.starting_position.y + 1,
+                        })
+                    {
+                        ship.is_destroyed = true;
+                        player_1.ships_destroyed += 1;
+                    }
+                }
+            }
+        }
+    }
+    player_2.number_ships = 5 - player_1.ships_destroyed;
 }
 
 #[cfg(test)]
@@ -154,10 +294,18 @@ mod tests {
 
     #[test]
     fn create_ships() {
-        for _ in 0..100 {
-            let mut player = Player::new();
-            generate_ships(&mut player);
-            crate::print_screen(&player, &player);
+        for _ in 0..1 {
+            println!("B1");
+            let (_, board) = generate_ships();
+            println!("B2");
+            let (_, board2) = generate_ships();
+
+            let mut p1 = Player::default();
+            p1.board = board;
+
+            let mut p2 = Player::default();
+            p2.board = board2;
+            crate::print_screen(&p1, &p2);
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::ships::Position;
+use crate::ships::{Position, Ship};
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct Player {
@@ -6,6 +6,7 @@ pub struct Player {
     pub board: [[char; 10]; 10],
     pub number_ships: usize,
     pub ships_destroyed: usize,
+    pub ships: Vec<Ship>,
 }
 
 impl Player {
@@ -26,12 +27,25 @@ impl Player {
         return true;
     }
 
-    pub fn new() -> Player {
+    pub fn new(ships: Vec<Ship>, board: [[char; 10]; 10]) -> Player {
+        return Player {
+            played_positions: vec![],
+            board,
+            number_ships: 5,
+            ships_destroyed: 0,
+            ships,
+        };
+    }
+}
+
+impl Default for Player {
+    fn default() -> Self {
         return Player {
             played_positions: vec![],
             board: [[' '; 10]; 10],
             number_ships: 5,
             ships_destroyed: 0,
+            ships: vec![],
         };
     }
 }

@@ -9,9 +9,9 @@ pub struct AiPlayer {
 }
 
 impl AiPlayer {
-    pub fn new(human_board: [[char; 10]; 10]) -> AiPlayer {
+    pub fn new(player: Player, human_board: [[char; 10]; 10]) -> AiPlayer {
         return AiPlayer {
-            player: Player::new(),
+            player,
             human_board,
             attempt: 0,
             attack_mode: false,
@@ -22,21 +22,41 @@ impl AiPlayer {
     pub fn decide(&mut self) -> Position {
         let last_played = match self.player.played_positions.last() {
             // BUGADO
-            Some(pos) => *pos,
-            None => {
-                if self.attack_mode {
+            Some(pos) => {
+                if self.attack_mode
+                    && (self.human_board[pos.x][pos.y] == 'o'
+                        || self.human_board[pos.x][pos.y] == 'x')
+                {
+                    // self.saved_index
                     self.saved_index
                 } else {
-                    return Position::get_random_position();
+                    self.attempt = 0;
+                    *pos
                 }
+            }
+            None => {
+                return Position::get_random_position();
             }
         };
 
         if self.human_board[last_played.x][last_played.y] == 'x' || self.attack_mode {
+            if !self.attack_mode {
+                self.saved_index = last_played;
+            }
             self.attack_mode = true;
+            // unsafe {
+            // DEBUG_STRING.push_str(format!("\nSaved position: {:?}", self.saved_index).as_str())
+            // };
             match self.attempt {
                 0 => {
                     self.attempt += 1;
+                    if last_played.x == 0
+                        || self.human_board[last_played.x - 1][last_played.y] == 'x'
+                        || self.human_board[last_played.x - 1][last_played.y] == 'o'
+                    {
+                        self.attack_mode = false;
+                        return Position::get_random_position();
+                    }
                     return Position {
                         x: last_played.x - 1,
                         y: last_played.y,
@@ -44,6 +64,13 @@ impl AiPlayer {
                 }
                 1 => {
                     self.attempt += 1;
+                    if last_played.y == 9
+                        || self.human_board[last_played.x][last_played.y + 1] == 'x'
+                        || self.human_board[last_played.x][last_played.y + 1] == 'o'
+                    {
+                        self.attack_mode = false;
+                        return Position::get_random_position();
+                    }
                     return Position {
                         x: last_played.x,
                         y: last_played.y + 1,
@@ -51,6 +78,13 @@ impl AiPlayer {
                 }
                 2 => {
                     self.attempt += 1;
+                    if last_played.x == 9
+                        || self.human_board[last_played.x + 1][last_played.y] == 'x'
+                        || self.human_board[last_played.x + 1][last_played.y] == 'o'
+                    {
+                        self.attack_mode = false;
+                        return Position::get_random_position();
+                    }
                     return Position {
                         x: last_played.x + 1,
                         y: last_played.y,
@@ -58,6 +92,13 @@ impl AiPlayer {
                 }
                 3 => {
                     self.attempt += 1;
+                    if last_played.y == 0
+                        || self.human_board[last_played.x][last_played.y - 1] == 'x'
+                        || self.human_board[last_played.x][last_played.y - 1] == 'o'
+                    {
+                        self.attack_mode = false;
+                        return Position::get_random_position();
+                    }
                     return Position {
                         x: last_played.x,
                         y: last_played.y - 1,
@@ -70,6 +111,7 @@ impl AiPlayer {
                 }
             }
         }
+        self.attack_mode = false;
         return Position::get_random_position();
     }
 }
