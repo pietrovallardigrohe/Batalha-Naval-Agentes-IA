@@ -128,7 +128,11 @@ pub fn print_screen(player_1: &Player, player_2: &Player) {
         }
         print!("| {}|", index);
         for column in player_2.board[index] {
-            print!("{column} ")
+            if column != '1' {
+                print!("{column} ")
+            } else {
+                print!("  ");
+            }
         }
         println!("|");
     }
