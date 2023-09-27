@@ -24,28 +24,28 @@ impl Player {
             return false;
         }
 
-        return true;
+        true
     }
 
     pub fn new(ships: Vec<Ship>, board: [[char; 10]; 10]) -> Player {
-        return Player {
+        Player {
             played_positions: vec![],
             board,
             number_ships: 5,
             ships_destroyed: 0,
             ships,
-        };
+        }
     }
 }
 
 impl Default for Player {
     fn default() -> Self {
-        return Player {
+        Player {
             played_positions: vec![],
             board: [[' '; 10]; 10],
             number_ships: 5,
             ships_destroyed: 0,
             ships: vec![],
-        };
+        }
     }
 }

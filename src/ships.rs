@@ -1,7 +1,5 @@
 use crate::{player::Player, utils};
-use core::fmt;
 use rand::{thread_rng, Rng};
-use std::{error::Error, fmt::Display};
 use utils::random_point;
 
 // type Result<T> = std::result::Result<T, SpaceOccupied>;
@@ -13,10 +11,10 @@ pub struct Position {
 
 impl Position {
     pub fn get_random_position() -> Position {
-        return Position {
+        Position {
             x: thread_rng().gen_range(0..10),
             y: thread_rng().gen_range(0..10),
-        };
+        }
     }
 
     pub fn new(pos: [usize; 2]) -> Position {
@@ -44,11 +42,11 @@ pub struct Ship {
 
 impl Ship {
     fn new(starting_position: Position, ship_type: ShipType) -> Ship {
-        return Ship {
+        Ship {
             starting_position,
             is_destroyed: false,
             ship_type,
-        };
+        }
     }
 }
 
@@ -58,9 +56,8 @@ pub fn generate_ships() -> (Vec<Ship>, [[char; 10]; 10]) {
 
     let mut iteration = 0;
     while iteration < 100 {
-        let l = generate_l(&mut board);
-        if l.is_ok() {
-            ships.push(l.unwrap());
+        if let Ok(l) = generate_l(&mut board) {
+            ships.push(l);
             break;
         } else {
             iteration += 1;
@@ -69,9 +66,8 @@ pub fn generate_ships() -> (Vec<Ship>, [[char; 10]; 10]) {
 
     iteration = 0;
     while iteration < 100 {
-        let z: Result<Ship, ()> = generate_z(&mut board);
-        if z.is_ok() {
-            ships.push(z.unwrap());
+        if let Ok(z) = generate_z(&mut board) {
+            ships.push(z);
             break;
         } else {
             iteration += 1;
@@ -80,9 +76,8 @@ pub fn generate_ships() -> (Vec<Ship>, [[char; 10]; 10]) {
 
     iteration = 0;
     while iteration < 100 {
-        let t = generate_t(&mut board);
-        if t.is_ok() {
-            ships.push(t.unwrap());
+        if let Ok(t) = generate_t(&mut board) {
+            ships.push(t);
             break;
         } else {
             iteration += 1;
@@ -91,9 +86,8 @@ pub fn generate_ships() -> (Vec<Ship>, [[char; 10]; 10]) {
     for _ in 0..2 {
         let mut iteration = 0;
         while iteration < 100 {
-            let duo = generate_duo(&mut board);
-            if duo.is_ok() {
-                ships.push(duo.unwrap());
+            if let Ok(duo) = generate_duo(&mut board) {
+                ships.push(duo);
                 break;
             } else {
                 iteration += 1;

@@ -7,5 +7,5 @@ pub fn random_point(mut limit_x: usize, mut limit_y: usize) -> [usize; 2] {
     let x = rng.gen_range(0..limit_x);
     let y = rng.gen_range(0..limit_y);
 
-    return [x, y];
+    [x, y]
 }

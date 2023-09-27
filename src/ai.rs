@@ -10,18 +10,17 @@ pub struct AiPlayer {
 
 impl AiPlayer {
     pub fn new(player: Player, human_board: [[char; 10]; 10]) -> AiPlayer {
-        return AiPlayer {
+        AiPlayer {
             player,
             human_board,
             attempt: 0,
             attack_mode: false,
             saved_index: Position { x: 0, y: 0 },
-        };
+        }
     }
 
     pub fn decide(&mut self) -> Position {
         let last_played = match self.player.played_positions.last() {
-            // BUGADO
             Some(pos) => {
                 if self.attack_mode
                     && (self.human_board[pos.x][pos.y] == 'o'
@@ -44,9 +43,6 @@ impl AiPlayer {
                 self.saved_index = last_played;
             }
             self.attack_mode = true;
-            // unsafe {
-            // DEBUG_STRING.push_str(format!("\nSaved position: {:?}", self.saved_index).as_str())
-            // };
             match self.attempt {
                 0 => {
                     self.attempt += 1;
@@ -112,6 +108,6 @@ impl AiPlayer {
             }
         }
         self.attack_mode = false;
-        return Position::get_random_position();
+        Position::get_random_position()
     }
 }

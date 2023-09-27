@@ -1,7 +1,7 @@
 use ai::AiPlayer;
 use rusty_tools::*;
 use ships::Position;
-use std::{io::stdin, ops::Range};
+use std::io::stdin;
 pub mod ai;
 pub mod player;
 pub mod ships;
@@ -10,9 +10,9 @@ use player::Player;
 
 #[derive(PartialEq, Eq)]
 enum ExecutionState {
-    RUNNING,
-    FINISHED,
-    DEBUG,
+    Running,
+    Finished,
+    Debug,
 }
 
 // static mut DEBUG_STRING: String = String::new();
@@ -24,15 +24,16 @@ fn main() {
     let mut player_human = Player::new(gen.0, gen.1);
     let gen = ships::generate_ships();
     let mut player_ai = AiPlayer::new(Player::new(gen.0, gen.1), player_human.board);
-    let mut game_state = ExecutionState::RUNNING;
+    let mut game_state = ExecutionState::Running;
 
     let mut turns: usize = 0;
-    ships::generate_ships();
 
     let mut print_buffer = String::new();
 
-    while game_state == ExecutionState::RUNNING || game_state == ExecutionState::DEBUG {
-        // clear_terminal();
+    print_buffer.push_str("\n\"{0..9} {0..9}\" = Shoot \ndebug = AI actions description \nhelp = Displays commands \nquit = Exit program");
+
+    while game_state == ExecutionState::Running || game_state == ExecutionState::Debug {
+        clear_terminal();
         print_screen(&player_human, &player_ai.player);
         println!("{print_buffer}");
 
@@ -42,37 +43,46 @@ fn main() {
             let mut input = String::new();
             stdin().read_line(&mut input).unwrap();
             trim_newline(&mut input);
-            if input.to_lowercase().as_str() == "quit" {
-                game_state = ExecutionState::FINISHED;
-            }
-            match process_input(input) {
-                Ok(position) => {
-                    if player_human.shoot(position, &mut player_ai.player) {
-                        check_ships(&mut player_human, &mut player_ai.player);
-                        turns += 1;
-                        player_ai.human_board = player_human.board;
+
+            match input.to_lowercase().as_str() {
+                "quit" => game_state = ExecutionState::Finished,
+                "debug" => {
+                    game_state = ExecutionState::Debug;
+                    print_buffer.push_str("DEBUG MODE ACTIVE");
+                }
+                "help" => {
+                    print_buffer.push_str("\n\"{0..9} {0..9}\" = Shoot \ndebug = AI actions description \nhelp = Displays commands \nquit = Exit program");
+                }
+                _ => match process_input(input) {
+                    Ok(position) => {
+                        if player_human.shoot(position, &mut player_ai.player) {
+                            check_ships(&mut player_human, &mut player_ai.player);
+                            turns += 1;
+                            player_ai.human_board = player_human.board;
+                        }
                     }
-                }
-                Err(err) => {
-                    print_buffer = String::from(err);
-                    ()
-                }
+                    Err(err) => {
+                        print_buffer = format!("ERROR: {err}");
+                    }
+                },
             }
         } else {
             let position = player_ai.decide();
-            // print_buffer.push_str(
-            //     format!(
-            //         "{position:?} \nAttempt: {} \nAttack Mode: {} \nLast position: {:?}",
-            //         player_ai.attempt,
-            //         player_ai.attack_mode,
-            //         player_ai
-            //             .player
-            //             .played_positions
-            //             .last()
-            //             .unwrap_or(&Position { x: 0, y: 0 })
-            //     )
-            //     .as_str(),
-            // );
+            if game_state == ExecutionState::Debug {
+                print_buffer.push_str(
+                    format!(
+                        "\nAI Behaviour: \nChoice: {position:?} \nAttempt: {} \nAttack Mode: {} \nLast position: {:?}",
+                        player_ai.attempt,
+                        player_ai.attack_mode,
+                        player_ai
+                            .player
+                            .played_positions
+                            .last()
+                            .unwrap_or(&Position { x: 0, y: 0 })
+                    )
+                    .as_str(),
+                );
+            }
 
             if player_ai.player.shoot(position, &mut player_human) {
                 check_ships(&mut player_ai.player, &mut player_human);
@@ -84,11 +94,11 @@ fn main() {
         if player_human.number_ships == 0 {
             print_screen(&player_human, &player_ai.player);
             println!("AI ganhou");
-            game_state = ExecutionState::FINISHED;
+            game_state = ExecutionState::Finished;
         } else if player_ai.player.number_ships == 0 {
             print_screen(&player_human, &player_ai.player);
             println!("Humano ganhou");
-            game_state = ExecutionState::FINISHED;
+            game_state = ExecutionState::Finished;
         }
     }
     // Game ending state
@@ -120,7 +130,7 @@ pub fn print_screen(player_1: &Player, player_2: &Player) {
         for column in player_2.board[index] {
             print!("{column} ")
         }
-        print!("|\n");
+        println!("|");
     }
 
     println!(
@@ -159,6 +169,6 @@ fn process_input<'a>(input: String) -> Result<Position, &'a str> {
         // print_buffer.push_str(format!("\nDEBUG: {x} {y}").as_str());
         Ok(Position { x, y })
     } else {
-        return Err("Invalid input");
+        Err("Invalid input")
     }
 }
